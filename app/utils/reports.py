@@ -125,20 +125,66 @@ def create_pdf(content):
     return buffer
 
 
-def create_csv(context):
+def create_csv(notes):
     buffer = io.BytesIO()
     text_buffer = io.StringIO()
+    writer = csv.writer(text_buffer, delimiter=',', quoting=csv.QUOTE_MINIMAL)
 
-    writer = csv.writer(text_buffer)
+    headers = [
+        'Дата',
+        'Головная боль',
+        'Время начала',
+        'Длительность',
+        'Тип боли',
+        'Локализация',
+        'Интенсивность',
+        'Триггеры',
+        'Симптомы',
+        'Медикаменты',
+        'Давление утро верхнее',
+        'Давление утро нижнее',
+        'Давление вечер верхнее',
+        'Давление вечер нижнее',
+        'Комментарий'
+    ]
+    writer.writerow(headers)
 
-    # writer.writerow(['Дата'])
-    for item in context:
-        text = []
-        writer.writerow([item.id, item.user_id, item.date, item.medicine])
+    for note in notes:
+        medicine_str = ''
+        if note.medicine:
+            meds = []
+            for m in note.medicine:
+                name = m.get('name', '')
+                if not name:
+                    continue
+                weight = m.get('weight', '')
+                if weight:
+                    meds.append(f"{name} ({weight})")
+                else:
+                    meds.append(name)
+            medicine_str = ', '.join(meds)
+
+        row = [
+            note.date.strftime('%d.%m.%Y') if note.date else '',
+            'Да' if note.is_headache else 'Нет',
+            note.headache_time.strftime('%H:%M') if note.headache_time else '',
+            note.duration or '',
+            ', '.join(note.headache_type) if note.headache_type else '',
+            ', '.join(note.area) if note.area else '',
+            str(note.intensity) if note.intensity is not None else '',
+            ', '.join(note.triggers) if note.triggers else '',
+            ', '.join(note.symptoms) if note.symptoms else '',
+            medicine_str,
+            str(note.pressure_morning_up) if note.pressure_morning_up is not None else '',
+            str(note.pressure_morning_down) if note.pressure_morning_down is not None else '',
+            str(note.pressure_evening_up) if note.pressure_evening_up is not None else '',
+            str(note.pressure_evening_down) if note.pressure_evening_down is not None else '',
+            note.comment or ''
+        ]
+        writer.writerow(row)
 
     buffer.write(text_buffer.getvalue().encode('utf-8'))
     buffer.seek(0)
-
     return buffer
 
 

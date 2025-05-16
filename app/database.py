@@ -14,7 +14,6 @@ AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=F
 
 Base = declarative_base()
 
-# Функция для получения сессии БД (используется в Depends)
 async def get_db():
     async with AsyncSessionLocal() as session:
         yield session
